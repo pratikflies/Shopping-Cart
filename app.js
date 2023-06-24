@@ -15,6 +15,7 @@ app.set("views", "views");
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
 
+//parses the incoming requests and exposes it on req.body
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -28,9 +29,9 @@ app.use((req, res, next) => {
     .catch((err) => console.log(err));
 });
 
+//middlewares
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
-
 app.use(errorController.get404);
 
 mongoConnect(() => {
