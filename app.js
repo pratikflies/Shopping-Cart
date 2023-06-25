@@ -24,6 +24,7 @@ app.use((req, res, next) => {
     .then((user) => {
       console.log(user);
       req.user = new User(user.name, user.email, user.cart, user._id);
+      //send it to the next middleware
       next();
     })
     .catch((err) => console.log(err));

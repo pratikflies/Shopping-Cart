@@ -1,6 +1,5 @@
 const mongodb = require("mongodb");
 const getDb = require("../util/database").getDb;
-
 const ObjectId = mongodb.ObjectId;
 
 class User {
@@ -22,32 +21,40 @@ class User {
       return cp.productId.toString() === product._id.toString();
     });
     let newQuantity = 1;
+    //this.cart.items is an array of objects;
+    console.log(this.cart.items);
+    //creating the exact same replica of the array of objects;
     const updatedCartItems = [...this.cart.items];
+    //if item already exists
     if (cartProductIndex >= 0) {
       newQuantity = this.cart.items[cartProductIndex].quantity + 1;
       updatedCartItems[cartProductIndex].quantity = newQuantity;
     } else {
       updatedCartItems.push({
+        //here itself we're creating productId,quantity field;
         productId: new ObjectId(product._id),
         quantity: 1,
       });
     }
+
+    //this is basically an entirely new cart object
     const updatedCart = {
       items: updatedCartItems,
     };
     const db = getDb();
-    return db
-      .collection("users")
-      .updateOne(
-        { _id: new ObjectId(this._id) },
-        { $set: { cart: updatedCart } }
-      );
+    return db.collection("users").updateOne(
+      //filter
+      { _id: new ObjectId(this._id) },
+      //update
+      { $set: { cart: updatedCart } }
+    );
   }
 
   deleteItemFromCart(productId) {
     const updatedCartItems = this.cart.items.filter((item) => {
       return item.productId.toString() !== productId.toString();
     });
+
     const db = getDb();
     return db
       .collection("users")
@@ -61,6 +68,8 @@ class User {
     const db = getDb();
     return this.getCart()
       .then((products) => {
+        console.log("here");
+        console.log(products);
         const order = {
           items: products,
           user: {
@@ -94,23 +103,33 @@ class User {
       quantities[prodId] = ele.quantity;
     });
 
-    return db
-      .collection("products")
-      .find({ _id: { $in: productIds } })
-      .toArray()
-      .then((products) => {
-        return products.map((p) => {
-          return { ...p, quantity: quantities[p._id] };
-        });
-      });
+    console.log(productIds);
+    console.log(quantities);
+
+    return (
+      db
+        .collection("products")
+        .find({ _id: { $in: productIds } })
+        //extract every product in productIds
+        .toArray()
+        .then((products) => {
+          return products.map((p) => {
+            return { ...p, quantity: quantities[p._id] };
+            //{_id, title, price, description, imageUrl, userId, quantity}
+          });
+        })
+    );
   }
 
   getOrders() {
     const db = getDb();
-    return db
-      .collection("orders")
-      .find({ "user._id": new ObjectId(this._id) })
-      .toArray();
+    return (
+      db
+        .collection("orders")
+        //notice that "user._id" is in double quotes
+        .find({ "user._id": new ObjectId(this._id) })
+        .toArray()
+    );
   }
 
   static findById(userId) {
