@@ -1,4 +1,37 @@
-const mongodb = require("mongodb");
+const mongoose = require("mongoose");
+
+const Schema = mongoose.Schema;
+
+const productSchema = new Schema({
+  //schemas in mongoose
+  title: {
+    type: String,
+    required: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  imageUrl: {
+    type: String,
+    required: true,
+  },
+  userId: {
+    type: Schema.Types.ObjectId,
+    //creating a reference
+    ref: "User",
+    required: true,
+  },
+});
+
+//"Product"->all small->plural->this is now used as my collection name;
+module.exports = mongoose.model("Product", productSchema);
+
+/*const mongodb = require("mongodb");
 const getDb = require("../util/database").getDb;
 
 class Product {
@@ -78,4 +111,4 @@ class Product {
   }
 }
 
-module.exports = Product;
+module.exports = Product;*/
