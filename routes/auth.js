@@ -3,6 +3,7 @@ const express = require("express");
 const { check, body } = require("express-validator");
 
 const authController = require("../controllers/auth");
+const User = require("../models/user");
 
 const router = express.Router();
 
@@ -10,24 +11,62 @@ router.get("/login", authController.getLogin);
 
 router.get("/signup", authController.getSignup);
 
-router.post("/login", authController.postLogin);
-
 router.post(
-  "/signup",
-  check("email").isEmail().withMessage("Please enter a valid e-mail."),
+  "/login",
+  check("email")
+    .isEmail()
+    .withMessage("Please enter a valid e-mail.")
+    .custom((value, { req }) => {
+      return User.findOne({ email: value }).then((userDoc) => {
+        //every then block returns a promise
+        if (!userDoc) {
+          //reject promise
+          return Promise.reject("User doesn't exist!");
+        }
+        //promise fulfilled with nothing, treated as true;
+      });
+    }),
   body(
     "password",
     "Your password should be alphanumeric and at least 5 characters long."
   )
+    .trim()
     .isLength({ min: 5 })
     .isAlphanumeric(),
-  body("confirmPassword").custom((value, { req }) => {
-    //custom comparator
-    if (value != req.body.password) {
-      throw new Error("Passwords and Confirm Password do NOT match!");
-    }
-    return true;
-  }),
+  authController.postLogin
+);
+
+router.post(
+  "/signup",
+  check("email")
+    .isEmail()
+    .withMessage("Please enter a valid e-mail.")
+    .custom((value, { req }) => {
+      return User.findOne({ email: value }).then((userDoc) => {
+        //every then block returns a promise
+        if (userDoc) {
+          //reject promise
+          return Promise.reject("User already exists.");
+        }
+        //promise fulfilled with nothing, treated as true;
+      });
+    }),
+  body(
+    "password",
+    "Your password should be alphanumeric and at least 5 characters long."
+  )
+    .trim()
+    .isLength({ min: 5 })
+    .isAlphanumeric(),
+  body("confirmPassword")
+    .trim()
+    .custom((value, { req }) => {
+      //custom comparator
+      if (value != req.body.password) {
+        throw new Error("Password and Confirm Password do NOT match!");
+      }
+      return true;
+    }),
   authController.postSignup
 );
 
