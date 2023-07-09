@@ -1,5 +1,4 @@
 const path = require("path");
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -19,7 +18,6 @@ const store = new MongoDBStore({
   uri: MONGODB_URI,
   collection: "sessions",
 });
-
 const csrfProtection = csrf();
 
 app.set("view engine", "ejs");
@@ -39,7 +37,6 @@ app.use(
     store: store,
   })
 );
-//uses session hence after it, now every request has a CSRF token;
 app.use(csrfProtection);
 app.use(flash());
 
@@ -49,10 +46,15 @@ app.use((req, res, next) => {
   }
   User.findById(req.session.user._id)
     .then((user) => {
+      if (!user) {
+        return next();
+      }
       req.user = user;
       next();
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      throw new Error(err);
+    });
 });
 
 app.use((req, res, next) => {
@@ -65,7 +67,14 @@ app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get("/500", errorController.get500);
+
 app.use(errorController.get404);
+
+app.use((error, req, res, next) => {
+  // res.status(error.httpStatusCode).render(...);
+  res.redirect("/500");
+});
 
 mongoose
   .connect(MONGODB_URI)
